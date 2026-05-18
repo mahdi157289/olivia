@@ -40,11 +40,10 @@ html {
 }
 
 .page-bg-cycle {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  overflow: hidden;
   background: transparent;
 }
 
@@ -61,9 +60,9 @@ html {
 }
 
 .page-bg-cycle__layer--home {
-  background-position: left center;
-  background-size: contain;
-  background-color: #ffffff;
+  background-position: top center;
+  background-size: 100% auto;
+  background-color: #f8f6f2;
 }
 
 body {
