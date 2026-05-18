@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import './Admin.css';
 
+interface RecentQuote {
+  id: number;
+  name: string;
+  product: string;
+  status: string;
+  date: string;
+}
+
 export function DashboardOverview() {
   const [stats, setStats] = useState({ quotes: 0, products: 0, pending: 0 });
-  const [recentQuotes, setRecentQuotes] = useState([]);
+  const [recentQuotes, setRecentQuotes] = useState<RecentQuote[]>([]);
 
   useEffect(() => {
     // We'll replace this with real fetch calls later
