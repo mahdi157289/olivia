@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, FormEvent } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { BackgroundSlideProvider } from './BackgroundSlideContext';
@@ -12,6 +12,30 @@ import { DashboardOverview } from './admin/DashboardOverview';
 import { ProductsInventory } from './admin/ProductsInventory';
 import { QuotesManagement } from './admin/QuotesManagement';
 import { EditProduct } from './admin/EditProduct';
+import { BeforeAfterSlider } from './components/BeforeAfterSlider';
+import { ApplicationSteps } from './components/ApplicationSteps';
+import { NavCategoryDropdown } from './components/NavCategoryDropdown';
+import {
+  useProductPageEnter,
+  useRevealPanel,
+} from './animations/useProductPageAnimations';
+import { useHeroEnterAnimation } from './animations/useHeroEnterAnimation';
+import { useHeroShowcaseSlides } from './animations/useHeroShowcaseSlides';
+import { useHomeScrollAnimations } from './animations/useHomeScrollAnimations';
+import { AppReadyProvider, useAppReady } from './AppReadyContext';
+import { AboutSection } from './components/AboutSection';
+import { MobileCategoryNav } from './components/MobileCategoryNav';
+import { MOBILE_MQ, useMediaQuery } from './hooks/useMediaQuery';
+import {
+  buildCatalogProducts,
+  getCategoryBySlug,
+  LEGACY_PRODUCT_SLUGS,
+  PRODUCT_CATEGORIES,
+  type Product,
+} from './data/productCatalog';
+
+export type { Product };
+export const products = buildCatalogProducts();
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,26 +67,18 @@ function Loader({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-type Product = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  price: number | null;
-  image: string;
-  gallery: string[];
-  details: string[];
-};
-
 const galleryReferences = [
-  { title: 'Résidence El Mansour', location: 'Monastir', image: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Villa Horizon', location: 'Sousse', image: 'https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Appartement Onyx', location: 'Tunis', image: 'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Boutique Le Loft', location: 'Hammamet', image: 'https://images.unsplash.com/photo-1618219908412-a29a1bb7b86e?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Palais des Roses', location: 'Djerba', image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Espace Emeraude', location: 'Sfax', image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Villa Azur', location: 'Bizerte', image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80&fm=avif' },
-  { title: 'Showroom Olivia', location: 'Monastir', image: 'https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=1400&q=80&fm=avif' },
+  { title: 'Anticato', location: 'Monastir', image: '/reference/antico.png' },
+  { title: 'Craquelé', location: 'Sousse', image: '/reference/craquée.png' },
+  { title: 'Craquelé 2', location: 'Tunis', image: '/reference/craquée (2).png' },
+  { title: 'Fior', location: 'Hammamet', image: '/reference/fior.png' },
+  { title: 'Saniflex', location: 'Djerba', image: '/reference/saniflex.png' },
+  { title: 'Travertinose', location: 'Sfax', image: '/reference/traventinose.png' },
+  { title: 'Travertino', location: 'Bizerte', image: '/reference/traventino.png' },
+  { title: 'Travertino 2', location: 'Monastir', image: '/reference/traventino (2).png' },
+  { title: 'Travertino 3', location: 'Nabeul', image: '/reference/traventino3.png' },
+  { title: 'Vinizia', location: 'Mahdia', image: '/reference/vinicia.png' },
+  { title: 'Vinizia 2', location: 'Sousse', image: '/reference/vinicia2.png' },
 ];
 
 const beforeAfterProjects = [
@@ -82,105 +98,29 @@ const beforeAfterProjects = [
   },
 ];
 
-const products: Product[] = [
-  {
-    id: '1',
-    slug: 'peinture-interieure-premium',
-    title: 'Peinture Intérieure Premium',
-    description:
-      'Une finition élégante et durable pour vos murs intérieurs. Notre formule exclusive offre une couvrance exceptionnelle et un rendu velouté haut de gamme.',
-    price: 145,
-    image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1562663474-6cbb3fee4c77?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1534349762230-e0caaff4f5af?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Finition mate veloutée', 'Séchage rapide (2h)', 'Nettoyage facile', 'Senteur neutre'],
-  },
-  {
-    id: '2',
-    slug: 'peinture-exterieure-pro',
-    title: 'Peinture Extérieure Pro',
-    description:
-      'Une protection maximale contre les intempéries et les rayons UV. Conçue pour durer, cette peinture préserve l\'éclat de votre façade pendant des années.',
-    price: 210,
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Barrière anti-humidité', 'Résistance UV renforcée', 'Elasticité supérieure', 'Garantie 10 ans'],
-  },
-  {
-    id: '3',
-    slug: 'renovation-cabinets',
-    title: 'Rénovation Cabinets',
-    description:
-      'Transformez votre cuisine ou votre salle de bain sans tout changer. Notre service de rénovation de cabinets redonne vie à vos meubles avec une finition usine.',
-    price: null,
-    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1616594039964-3f3b2281f0af?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Rendu ultra-lisse', 'Haute résistance aux chocs', 'Large choix de teintes', 'Zéro trace de pinceau'],
-  },
-  {
-    id: '4',
-    slug: 'peinture-ecosolutions',
-    title: 'Peinture Éco-Solutions',
-    description:
-      'Une peinture écologique à faible teneur en COV, idéale pour les chambres d\'enfants et les environnements sensibles. Respectueuse de la nature et de votre santé.',
-    price: 135,
-    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1562663474-6cbb3fee4c77?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1534349762230-e0caaff4f5af?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Zéro solvant nocif', 'Sans odeur', 'Certifié Écolabel', 'Nettoyage à l\'eau'],
-  },
-  {
-    id: '5',
-    slug: 'enduit-decoratif',
-    title: 'Enduit Décoratif Effet Béton',
-    description:
-      'Apportez une touche industrielle et moderne à votre intérieur avec notre enduit décoratif effet béton ciré. Une texture unique et un caractère affirmé.',
-    price: 280,
-    image: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Finition texturée', 'Hautement durable', 'Look industriel', 'Résistant à l\'abrasion'],
-  },
-  {
-    id: '6',
-    slug: 'lasure-bois-expert',
-    title: 'Lasure Bois Expert',
-    description:
-      'Protégez et embellissez vos boiseries intérieures et extérieures. Notre lasure laisse respirer le bois tout en le protégeant des agressions du quotidien.',
-    price: 110,
-    image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80',
-    gallery: [
-      'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1616594039964-3f3b2281f0af?auto=format&fit=crop&w=1400&q=80',
-    ],
-    details: ['Protège des insectes', 'Filtre anti-UV', 'Finition satinée', 'Entretien facile'],
-  },
-];
-
 function Navbar() {
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_MQ);
 
   const isHome = location.pathname === '/';
-  const isProductPage = location.pathname.startsWith('/produit/');
+  const activeProductCategory = useMemo(() => {
+    const match = location.pathname.match(/^\/produit\/([^/]+)/);
+    if (!match) return null;
+    return getCategoryBySlug(match[1]) ?? null;
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!isHome) {
@@ -188,12 +128,11 @@ function Navbar() {
       return;
     }
 
-    // Default to apropos if at the top of home
     if (window.scrollY < 100) {
-      setActiveSection('apropos');
+      setActiveSection(null);
     }
 
-    const sectionIds = ['apropos', 'services', 'devis'];
+    const sectionIds = ['services', 'references', 'apropos', 'devis'];
     const sections = sectionIds
       .map((id) => document.getElementById(id))
       .filter((section): section is HTMLElement => section !== null);
@@ -207,38 +146,73 @@ function Navbar() {
           setActiveSection(visible[0].target.id);
         }
       },
-      { threshold: [0.2, 0.45, 0.7], rootMargin: '-20% 0px -55% 0px' },
+      {
+        threshold: [0.15, 0.35, 0.55],
+        rootMargin: isMobile ? '-12% 0px -58% 0px' : '-20% 0px -55% 0px',
+      },
     );
 
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, [location.pathname]);
+  }, [location.pathname, isMobile]);
 
   const sectionHref = (id: string) => (location.pathname === '/' ? `#${id}` : `/#${id}`);
+  const closeMenu = () => setMenuOpen(false);
+  const navLinkClass = (active: boolean) => (active ? 'is-active' : '');
 
   return (
     <header className="navbar">
-      <div className="container nav-inner">
-        <nav className="nav-links nav-links-left">
-          <a href={sectionHref('apropos')} className={isHome && activeSection === 'apropos' ? 'is-active' : ''}>
-            A propos
-          </a>
-          <a href={sectionHref('services')} className={isHome && activeSection === 'services' ? 'is-active' : ''}>
-            Produits
-          </a>
-        </nav>
-
-        <Link to="/" className="logo logo-center">
+      <div className="nav-inner">
+        <Link to="/" className="logo" onClick={closeMenu}>
           <img src="/olivia-logo.png" alt="Olivia Peinture et Decoration" className="logo-image" />
         </Link>
 
-        <nav className="nav-links nav-links-right">
-          <a href={sectionHref('devis')} className={isHome && activeSection === 'devis' ? 'is-active' : ''}>
+        <nav className="nav-links nav-links--desktop" aria-label="Navigation principale">
+          <div className="nav-product-group">
+            {PRODUCT_CATEGORIES.map((category) => (
+              <NavCategoryDropdown
+                key={category.id}
+                category={category}
+                isActive={activeProductCategory === category.id}
+              />
+            ))}
+          </div>
+          <a href={sectionHref('references')} className={navLinkClass(isHome && activeSection === 'references')}>
+            References
+          </a>
+          <a href={sectionHref('devis')} className={navLinkClass(isHome && activeSection === 'devis')}>
             Devis
           </a>
-          <NavLink to="/produit/peinture-interieure-premium" className={isProductPage ? 'is-active' : ''}>
-            Produit
-          </NavLink>
+        </nav>
+
+        <button
+          type="button"
+          className="nav-menu-toggle"
+          aria-expanded={menuOpen}
+          aria-controls="mobile-nav-drawer"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="nav-menu-toggle__bar" />
+          <span className="nav-menu-toggle__bar" />
+          <span className="nav-menu-toggle__bar" />
+          <span className="sr-only">{menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
+        </button>
+      </div>
+
+      <div
+        id="mobile-nav-drawer"
+        className={`nav-drawer${menuOpen ? ' is-open' : ''}`}
+        aria-hidden={!menuOpen}
+        onClick={closeMenu}
+      >
+        <nav className="nav-drawer__panel" onClick={(e) => e.stopPropagation()} aria-label="Menu mobile">
+          <MobileCategoryNav onNavigate={closeMenu} linkClass={navLinkClass} />
+          <a href={sectionHref('references')} className={navLinkClass(isHome && activeSection === 'references')} onClick={closeMenu}>
+            References
+          </a>
+          <a href={sectionHref('devis')} className={navLinkClass(isHome && activeSection === 'devis')} onClick={closeMenu}>
+            Devis
+          </a>
         </nav>
       </div>
     </header>
@@ -275,10 +249,17 @@ function Footer() {
             <div className="footer-col">
               <span className="col-label">Solutions</span>
               <ul className="footer-nav-list">
-                <li><Link to="/produit/peinture-interieure-premium">Intérieur</Link></li>
-                <li><Link to="/produit/peinture-exterieure-pro">Extérieur</Link></li>
-                <li><Link to="/produit/enduit-decoratif">Enduits</Link></li>
-                <li><Link to="/produit/peinture-ecosolutions">Éco</Link></li>
+                <li>
+                  <Link to={`/produit/${PRODUCT_CATEGORIES[0].subCategories[0].products[0].slug}`}>
+                    {PRODUCT_CATEGORIES[0].label}
+                  </Link>
+                </li>
+                <li>
+                  <Link to={`/produit/${PRODUCT_CATEGORIES[1].subCategories[0].products[0].slug}`}>
+                    {PRODUCT_CATEGORIES[1].label}
+                  </Link>
+                </li>
+                <li><a href="#services">Catalogue complet</a></li>
               </ul>
             </div>
           </div>
@@ -323,7 +304,7 @@ function RingCarousel() {
   useEffect(() => {
     const updateRadius = () => {
       const w = window.innerWidth;
-      setRadius(w < 768 ? 280 : w < 1200 ? 420 : 550);
+      setRadius(w < 768 ? 350 : w < 1200 ? 550 : 750);
     };
     updateRadius();
     window.addEventListener('resize', updateRadius);
@@ -343,7 +324,7 @@ function RingCarousel() {
       let norm = angle % 360;
       if (norm > 180) norm -= 360;
       if (norm < -180) norm += 360;
-      const focus = Math.max(0, 1 - Math.abs(norm) / 75);
+      const focus = Math.max(0, 1 - Math.abs(norm) / 120);
       gsap.set(items[i], {
         rotateY: angle,
         transformOrigin: `50% 50% ${-radius}px`,
@@ -515,10 +496,16 @@ function QuoteForm({ initialProduct, hideHeader }: { initialProduct?: string; hi
         </label>
         <select id="produit" name="produit" value={product} onChange={(e) => setProduct(e.target.value)}>
           <option value="General">General / Autre</option>
-          {products.map((item) => (
-            <option key={item.id} value={item.title}>
-              {item.title}
-            </option>
+          {PRODUCT_CATEGORIES.map((category) => (
+            <optgroup key={category.id} label={category.label}>
+              {products
+                .filter((item) => item.category === category.id)
+                .map((item) => (
+                  <option key={item.id} value={item.title}>
+                    {item.title}
+                  </option>
+                ))}
+            </optgroup>
           ))}
         </select>
       </div>
@@ -550,12 +537,14 @@ const STUCCO_SLIDE_MS = 8500;
 
 function HomePage() {
   const navigate = useNavigate();
+  const appReady = useAppReady();
   const [heroStyle, setHeroStyle] = useState<CSSProperties>({});
   const [showcaseStyle, setShowcaseStyle] = useState<CSSProperties>({
     transform: 'perspective(720px) translateY(-30px) rotateZ(-2.25deg) rotateX(0deg) rotateY(0deg)',
     transformStyle: 'preserve-3d',
   });
   const showcaseRef = useRef<HTMLElement>(null);
+  const showcaseViewportRef = useRef<HTMLDivElement>(null);
   const [stuccoSlide, setStuccoSlide] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -600,96 +589,15 @@ function HomePage() {
 
   const mainRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Ensure ScrollTrigger is refreshed on mount and when images might have loaded
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!mainRef.current) return;
-
-    const ctx = gsap.context(() => {
-      // 1. Hero Animation (Immediate)
-      // We animate children instead of the whole container to prevent total white screen if JS lags
-      const heroTl = gsap.timeline({ 
-        defaults: { ease: 'power4.out' },
-        onComplete: () => ScrollTrigger.refresh()
-      });
-
-      heroTl
-        .fromTo('.hero-background',
-          { autoAlpha: 0, scale: 1.1 },
-          { autoAlpha: 1, scale: 1, duration: 1.5 }
-        )
-        .fromTo('.hero-content h1', 
-          { y: 60, autoAlpha: 0 }, 
-          { y: 0, autoAlpha: 1, duration: 1.2 }, 
-          '-=1'
-        )
-        .fromTo('.hero-content .eyebrow', 
-          { y: 20, autoAlpha: 0 }, 
-          { y: 0, autoAlpha: 1, duration: 0.8 }, 
-          '-=0.8'
-        )
-        .fromTo('.hero-actions', 
-          { y: 20, autoAlpha: 0 }, 
-          { y: 0, autoAlpha: 1, duration: 0.8 }, 
-          '-=0.6'
-        )
-        .fromTo(
-          '.hero-showcase__frame',
-          { autoAlpha: 0, y: 40, scale: 0.96 },
-          { autoAlpha: 1, y: 0, scale: 1, duration: 0.9, ease: 'power3.out' },
-          '-=1'
-        );
-
-      // 2. Scroll-based animations for other sections
-      const sections = gsap.utils.toArray<HTMLElement>('section:not(.hero)');
-      sections.forEach((section) => {
-        const sectionTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-          }
-        });
-
-        sectionTl.fromTo(section, 
-          { autoAlpha: 0, y: 40 },
-          { autoAlpha: 1, y: 0, duration: 1.2, ease: 'power4.out' }
-        );
-
-        const separator = section.querySelector('.title-separator');
-        if (separator) {
-          sectionTl.fromTo(separator, 
-            { scaleX: 0 }, 
-            { scaleX: 1, transformOrigin: 'left center', duration: 0.8, ease: 'power2.inOut' }, 
-            '-=0.8'
-          );
-        }
-
-        // Unified reveal for children elements
-        const children = section.querySelectorAll('.cards > article, .gallery-grid img, .before-after-card, .premium-panel > div, .quote-form, .service-card, .stats article');
-        if (children.length > 0) {
-          sectionTl.fromTo(children, 
-            { autoAlpha: 0, y: 30, scale: 0.98 }, 
-            { autoAlpha: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.12, ease: 'power2.out' }, 
-            '-=0.6'
-          );
-        }
-      });
-    }, mainRef);
-
-    return () => ctx.revert();
-  }, []);
+  useHeroEnterAnimation(mainRef, appReady);
+  useHomeScrollAnimations(mainRef, appReady);
+  useHeroShowcaseSlides(showcaseViewportRef, stuccoSlide, appReady);
 
   return (
     <div ref={mainRef}>
       <section className="hero">
         <div className="hero-background">
+          <img src="/1.png" alt="" className="hero-bg-image" />
           <div className="hero-overlay" />
         </div>
         <div
@@ -744,7 +652,7 @@ function HomePage() {
             </div>
           </div>
 
-          {/* Stucco portfolio — full bleed, titled slides (no 3D clip issues). */}
+          {/* Stucco portfolio — full bleed, video */}
           <aside
             ref={showcaseRef}
             className="hero-showcase"
@@ -752,41 +660,16 @@ function HomePage() {
             aria-label="Finitions stucco"
           >
             <div className="hero-showcase__frame">
-              <div className="hero-showcase__rail" aria-hidden="true">
-                {HERO_STUCCO_SLIDES.map((slide, i) => (
-                  <span
-                    key={slide.src}
-                    className={`hero-showcase__rail-tick ${i === stuccoSlide ? 'is-active' : ''}`}
-                  />
-                ))}
-              </div>
-              <div className="hero-showcase__viewport">
-                {HERO_STUCCO_SLIDES.map((slide, i) => (
-                  <div
-                    key={slide.src}
-                    className={`hero-showcase__slide ${i === stuccoSlide ? 'is-active' : ''}`}
-                    aria-hidden={i !== stuccoSlide}
-                  >
-                    <img src={slide.src} alt="" decoding="async" loading={i === 0 ? 'eager' : 'lazy'} />
-                    <div className="hero-showcase__scrim" />
-                    <div className="hero-showcase__legend">
-                      <p className="hero-showcase__line">{slide.line}</p>
-                      <h3 className="hero-showcase__title">{slide.title}</h3>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="hero-showcase__nav">
-                {HERO_STUCCO_SLIDES.map((slide, i) => (
-                  <button
-                    key={slide.src}
-                    type="button"
-                    className={`hero-showcase__dot ${i === stuccoSlide ? 'is-active' : ''}`}
-                    aria-label={`Voir ${slide.title}`}
-                    aria-current={i === stuccoSlide || undefined}
-                    onClick={() => setStuccoSlide(i)}
-                  />
-                ))}
+              <div className="hero-showcase__viewport" ref={showcaseViewportRef}>
+                <video
+                  src="/video.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="hero-showcase__video"
+                />
+                <div className="hero-showcase__scrim" />
               </div>
             </div>
           </aside>
@@ -796,7 +679,10 @@ function HomePage() {
 
 
       <section id="services" className="section section--products">
-        <div className="container">
+        <div className="section-bg">
+          <img src="/1.png" alt="" className="section-bg-image" />
+        </div>
+        <div className="container" style={{ paddingTop: '2rem' }}>
           <h2>Nos Produits</h2>
           <div className="title-separator" />
         </div>
@@ -813,8 +699,8 @@ function HomePage() {
             <div className="cards-container" ref={scrollContainerRef}>
               <div className="cards cards--full-bleed">
                 {[...products, ...products, ...products].map((product, index) => (
-                  <article key={`${product.id}-${index}`} className="card">
-                    <img src={product.image} alt={product.title} loading="lazy" />
+                  <article key={`${product.id}-${index}`} className="card" data-reveal>
+                    <img src={product.image} alt={product.title} loading={index < 10 ? "eager" : "lazy"} />
                     <h3>{product.title}</h3>
                     <p>{product.description}</p>
                     <div className="card-price-row">
@@ -842,6 +728,9 @@ function HomePage() {
       </section>
 
       <section id="references" className="section">
+        <div className="section-bg">
+          <img src="/1.png" alt="" className="section-bg-image" />
+        </div>
         <div className="container">
           <h2>Nos Références</h2>
           <div className="title-separator" />
@@ -849,59 +738,44 @@ function HomePage() {
         <RingCarousel />
       </section>
 
-      <section id="apropos" className="section container">
-        <h2>À Propos d'Olivia</h2>
-        <div className="title-separator" />
-        <div className="premium-panel">
-          <div>
-            <p>
-              Olivia accompagne chaque client de la conception des teintes jusqu a la finition finale avec une methode
-              rigoureuse, des materiaux fiables et une attention au detail constante.
-            </p>
-          </div>
-          <div className="stats">
-            <article>
-              <strong>250+</strong>
-              <span>Projets finalises</span>
-            </article>
-            <article>
-              <strong>98%</strong>
-              <span>Clients satisfaits</span>
-            </article>
-            <article>
-              <strong>48h</strong>
-              <span>Delai de devis</span>
-            </article>
+      <AboutSection />
+
+      <section className="section before-after">
+        <div className="section-bg">
+          <img src="/1.png" alt="" className="section-bg-image" />
+        </div>
+        <div className="container" style={{ paddingTop: '2rem' }}>
+          <h2>Transformation</h2>
+          <div className="title-separator" />
+          <div className="before-after-grid">
+            {beforeAfterProjects.map((project) => (
+              <article key={project.title} className="before-after-card">
+                <h3>{project.title}</h3>
+                <div className="comparison">
+                  <figure>
+                    <img src={project.before} alt={`${project.title} avant`} loading="eager" />
+                    <figcaption>Avant</figcaption>
+                  </figure>
+                  <figure>
+                    <img src={project.after} alt={`${project.title} apres`} loading="eager" />
+                    <figcaption>Apres</figcaption>
+                  </figure>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="section container before-after">
-        <h2>Transformation</h2>
-        <div className="title-separator" />
-        <div className="before-after-grid">
-          {beforeAfterProjects.map((project) => (
-            <article key={project.title} className="before-after-card">
-              <h3>{project.title}</h3>
-              <div className="comparison">
-                <figure>
-                  <img src={project.before} alt={`${project.title} avant`} loading="eager" />
-                  <figcaption>Avant</figcaption>
-                </figure>
-                <figure>
-                  <img src={project.after} alt={`${project.title} apres`} loading="eager" />
-                  <figcaption>Apres</figcaption>
-                </figure>
-              </div>
-            </article>
-          ))}
+      <section id="devis" className="section">
+        <div className="section-bg">
+          <img src="/1.png" alt="" className="section-bg-image" />
         </div>
-      </section>
-
-      <section id="devis" className="section container">
-        <h2>Demande de devis</h2>
-        <div className="title-separator" />
-        <QuoteForm />
+        <div className="container" style={{ paddingTop: '2rem' }}>
+          <h2>Demande de devis</h2>
+          <div className="title-separator" />
+          <QuoteForm />
+        </div>
       </section>
     </div>
   );
@@ -910,52 +784,71 @@ function HomePage() {
 function ProductPage() {
   const { slug } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const product = useMemo(() => products.find((item) => item.slug === slug), [slug]);
   const pageRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setShowForm(false); // Reset form visibility on product change
+    setShowForm(false);
     setSelectedImage(null);
+    setImageIndex(0);
+    setIsScrolledDown(false);
+    setIsAtBottom(false);
   }, [slug]);
 
   useEffect(() => {
-    if (!pageRef.current || !product) return;
-    
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
       
-      tl.fromTo(pageRef.current, 
-        { autoAlpha: 0, y: 10 },
-        { autoAlpha: 1, y: 0, duration: 0.6 }
-      )
-      .fromTo('.product-gallery',
-        { autoAlpha: 0, x: -30 },
-        { autoAlpha: 1, x: 0, duration: 0.8 },
-        '-=0.4'
-      )
-      .fromTo('.product-info > *', 
-        { autoAlpha: 0, y: 20 }, 
-        { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.06 }, 
-        '-=0.6'
-      );
-    }, pageRef);
+      const isBottom = scrollY + windowHeight >= documentHeight - 100;
+      setIsAtBottom(isBottom);
+      setIsScrolledDown(scrollY > windowHeight / 2);
+      
+      if (btnRef.current) {
+        const baseTop = 24; // in rem
+        const extra = Math.min(scrollY * 0.02, 10); // up to 10rem extra
+        btnRef.current.style.top = `${baseTop + extra}rem`;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // initial call
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    return () => ctx.revert();
-  }, [product]);
-
-  // Animation for showing form
   useEffect(() => {
-    if (showForm && formRef.current) {
-      gsap.fromTo(formRef.current,
-        { autoAlpha: 0, height: 0, y: 20 },
-        { autoAlpha: 1, height: 'auto', y: 0, duration: 0.6, ease: 'power3.out' }
-      );
-    }
-  }, [showForm]);
+    if (product || !slug) return;
+    const redirect = LEGACY_PRODUCT_SLUGS[slug];
+    if (redirect) navigate(`/produit/${redirect}`, { replace: true });
+  }, [product, slug, navigate]);
+
+  useEffect(() => {
+    if (!product || isPaused) return;
+    const allImages = [product.image, ...product.gallery];
+    const intervalId = setInterval(() => {
+      setImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, [product, isPaused]);
+
+  useEffect(() => {
+    if (!product) return;
+    const allImages = [product.image, ...product.gallery];
+    setSelectedImage(allImages[imageIndex]);
+  }, [imageIndex, product]);
+
+  useProductPageEnter(pageRef, product?.id);
+  useRevealPanel(formRef, showForm);
 
   // Body scroll lock for modal
   useEffect(() => {
@@ -985,10 +878,29 @@ function ProductPage() {
   return (
     <div ref={pageRef} className="product-page-wrapper">
       <section className="section container">
+        <button
+          ref={btnRef}
+          className="sticky-scroll-btn"
+          onClick={() => {
+            if (isAtBottom || isScrolledDown) {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+            }
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: (isAtBottom || isScrolledDown) ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
         <Link to="/" className="back-link">← Retour aux produits</Link>
         <div className="product-detail">
           <div className="product-gallery">
-            <div className="main-image-container">
+            <div 
+              className="main-image-container"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <img src={selectedImage || product.image} alt={product.title} className="detail-image" loading="eager" />
               <div className="image-overlay" />
               
@@ -997,7 +909,10 @@ function ProductPage() {
                   <div 
                     key={image} 
                     className={`gallery-item ${((selectedImage === null && idx === 0) || selectedImage === image) ? 'is-active' : ''}`}
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => {
+                      setSelectedImage(image);
+                      setImageIndex(idx);
+                    }}
                   >
                     <img src={image} alt={`${product.title} detail ${idx + 1}`} loading="eager" />
                   </div>
@@ -1008,7 +923,9 @@ function ProductPage() {
 
           <div className="product-info premium-glassbox">
             <div className="info-header">
-              <p className="eyebrow">Olivia Collection</p>
+              <p className="eyebrow">
+                {PRODUCT_CATEGORIES.find((c) => c.id === product.category)?.label ?? 'Olivia Collection'}
+              </p>
               <h2>{product.title}</h2>
               <div className="title-separator" />
               <PriceBlock price={product.price} />
@@ -1037,6 +954,22 @@ function ProductPage() {
             </div>
           </div>
         </div>
+
+        {product.applicationSteps && product.applicationSteps.length > 0 && (
+          <section className="product-application-steps">
+            <ApplicationSteps steps={product.applicationSteps} />
+          </section>
+        )}
+
+        {product.beforeImage && product.afterImage && (
+          <section className="product-before-after">
+            <div className="product-before-after-header">
+              <h3 className="section-subtitle">Résultat Garanti</h3>
+              <div className="title-separator" />
+            </div>
+            <BeforeAfterSlider beforeImage={product.beforeImage} afterImage={product.afterImage} />
+          </section>
+        )}
 
         {showForm && createPortal(
           <div className="modal-overlay" onClick={() => setShowForm(false)}>
@@ -1070,35 +1003,37 @@ export function App() {
 
 function AppShell() {
   const [loading, setLoading] = useState(true);
+  const appReady = !loading;
 
   return (
     <>
       {loading && <Loader onComplete={() => setLoading(false)} />}
-      <div 
-        className="app-shell" 
-        style={{ 
-          opacity: loading ? 0 : 1, 
-          transition: 'opacity 0.2s ease-out',
-          height: loading ? '100vh' : 'auto',
-          overflow: loading ? 'hidden' : 'visible'
-        }}
-      >
-        <PageBackgroundLayers />
-        <Navbar />
-        <main>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/produit/:slug" element={<ProductPage />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<DashboardOverview />} />
-              <Route path="products" element={<ProductsInventory />} />
-              <Route path="products/:id/edit" element={<EditProduct />} />
-              <Route path="quotes" element={<QuotesManagement />} />
-            </Route>
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <AppReadyProvider ready={appReady}>
+        <div
+          className="app-shell"
+          style={{
+            visibility: loading ? 'hidden' : 'visible',
+            height: loading ? '100vh' : 'auto',
+            overflow: loading ? 'hidden' : 'visible',
+          }}
+        >
+          <PageBackgroundLayers />
+          <Navbar />
+          <main>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/produit/:slug" element={<ProductPage />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<DashboardOverview />} />
+                <Route path="products" element={<ProductsInventory />} />
+                <Route path="products/:id/edit" element={<EditProduct />} />
+                <Route path="quotes" element={<QuotesManagement />} />
+              </Route>
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </AppReadyProvider>
     </>
   );
 }
